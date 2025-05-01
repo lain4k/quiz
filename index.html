@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>quiz</title>
+  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+  <style>
+    .image-container {
+      width: 600px;
+      height: 600px;
+      margin: 20px auto 0;
+      border: 2px solid #ccc;
+      text-align: center;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .image-container img {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="image-container">
+    <img src="/current-image" alt="quiz image">
+  </div>
+  <br>
+  <div style="text-align: center;">
+	<form hx-post="/submit-answer" hx-trigger="submit" hx-swap="none">
+		<input 
+        type="text" 
+        name="answer" 
+		  id="answer-input"
+        placeholder="your answer" 
+		  style="text-align: center"
+		>
+	</form>
+  </div>
+	<script>
+		document.body.addEventListener('htmx:afterRequest', function(evt) {
+			const input = document.getElementById('answer-input');
+			if (input) input.value = '';
+		});
+  </script>
+</body>
+</html>
