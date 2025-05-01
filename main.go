@@ -1,12 +1,13 @@
 package main
 
 import (
-//	"encoding/json"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 )
 
-/*type Question struct {
+type Question struct {
 	ID int `json:"id"`
 	Image string `json:"image"`
 	Answer string `json:"answer"`
@@ -14,14 +15,19 @@ import (
 
 var questions []Question
 
-func loadQuestions() {
+func loadQuestions() error {
 	data, err := os.ReadFile("questions.json")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return json.Unmarshal(data, &questions)
 }
-*/
+
 func main() {
+	if err := loadQuestions(); err != nil {
+		panic(err)
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
