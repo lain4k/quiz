@@ -38,6 +38,7 @@ func main() {
 			http.Error(w, "No more questions", http.StatusNotFound)
 			return
 		}
+		w.Header().Set("Cache-Control", "no-store")
 		http.ServeFile(w, r, questions[currentQuestionIndex].Image)
 	})
 
@@ -60,9 +61,13 @@ func main() {
 			if answer == correctAnswer {
 				fmt.Println("Correct!")
 				currentQuestionIndex++
+				w.Write([]byte("correct"))
 			} else {
 				fmt.Println("Incorrect! Try again.")
+				w.Write([]byte("incorrect"))
 			}
+		} else {
+			w.Write([]byte("done"))
 		}
 	})
 
