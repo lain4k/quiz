@@ -54,16 +54,40 @@ func main() {
 
 		answer := r.FormValue("answer")
 		fmt.Println("Received answer:", answer)
+		fmt.Println("Current question index:", currentQuestionIndex)
 
 		if currentQuestionIndex < len(questions) {
 			correctAnswer := questions[currentQuestionIndex].Answer
 			if answer == correctAnswer {
 				fmt.Println("Correct!")
 				currentQuestionIndex++
+				
+				// Send JSON response with correct answer status
+				w.Header().Set("Content-Type", "application/json")
+				response := map[string]interface{}{
+					"correct": true,
+					"completed": currentQuestionIndex >= len(questions),
+				}
+				json.NewEncoder(w).Encode(response)
 			} else {
 				fmt.Println("Incorrect! Try again.")
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]bool{"correct": false})
 			}
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]bool{"completed": true})
 		}
+	})
+
+	// Add a new endpoint to check current question index
+	http.HandleFunc("/current-question-info", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		info := map[string]interface{}{
+			"currentIndex": currentQuestionIndex,
+			"totalQuestions": len(questions),
+		}
+		json.NewEncoder(w).Encode(info)
 	})
 
 	fmt.Println("Server started at http://localhost:8080")

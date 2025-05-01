@@ -21,29 +21,87 @@
       max-width: 100%;
       height: auto;
     }
+    .feedback {
+      text-align: center;
+      height: 24px;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    .correct { color: green; }
+    .incorrect { color: red; }
   </style>
 </head>
 <body>
-  <div class="image-container">
-    <img src="/current-image" alt="quiz image">
+  <div id="quiz-container">
+    <div class="image-container">
+      <img id="question-image" src="/current-image" alt="quiz image">
+    </div>
+    <div id="feedback" class="feedback"></div>
+    <div style="text-align: center;">
+      <form id="answer-form">
+        <input 
+          type="text" 
+          name="answer" 
+          id="answer-input"
+          placeholder="your answer" 
+          style="text-align: center"
+          autocomplete="off"
+        >
+        <button type="submit">Submit</button>
+      </form>
+    </div>
   </div>
-  <br>
-  <div style="text-align: center;">
-	<form hx-post="/submit-answer" hx-trigger="submit" hx-swap="none">
-		<input 
-        type="text" 
-        name="answer" 
-		  id="answer-input"
-        placeholder="your answer" 
-		  style="text-align: center"
-		>
-	</form>
-  </div>
-	<script>
-		document.body.addEventListener('htmx:afterRequest', function(evt) {
-			const input = document.getElementById('answer-input');
-			if (input) input.value = '';
-		});
+  <script>
+    document.getElementById('answer-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const input = document.getElementById('answer-input');
+      const answer = input.value.trim();
+      const feedback = document.getElementById('feedback');
+      
+      // Clear the feedback
+      feedback.textContent = "";
+      feedback.className = "feedback";
+      
+      // Submit answer via fetch API (more reliable than htmx in this case)
+      fetch('/submit-answer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'answer=' + encodeURIComponent(answer)
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log('Response:', data);
+        
+        // Clear input
+        input.value = '';
+        
+        if (data.correct) {
+          feedback.textContent = "Correct!";
+          feedback.className = "feedback correct";
+          
+          // If quiz completed
+          if (data.completed) {
+            document.getElementById('quiz-container').innerHTML = 
+              '<h2 style="color: green; text-align: center">Quiz completed! Congratulations!</h2>';
+          } else {
+            // Force reload the image with cache busting
+            const img = document.getElementById('question-image');
+            img.src = '/current-image?' + new Date().getTime();
+          }
+        } else {
+          feedback.textContent = "Incorrect. Try again.";
+          feedback.className = "feedback incorrect";
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        feedback.textContent = "Error submitting answer. Try again.";
+        feedback.className = "feedback incorrect";
+      });
+    });
   </script>
 </body>
 </html>
