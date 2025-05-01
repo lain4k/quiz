@@ -14,6 +14,7 @@ type Question struct {
 }
 
 var questions []Question
+var currentQuestionIndex = 0
 
 func loadQuestions() error {
 	data, err := os.ReadFile("questions.json")
@@ -33,7 +34,11 @@ func main() {
 	})
 
 	http.HandleFunc("/current-image", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "assets/1.png")
+		if currentQuestionIndex >= len(questions) {
+			http.Error(w, "No more questions", http.StatusNotFound)
+			return
+		}
+		http.ServeFile(w, r, questions[currentQuestionIndex].Image)
 	})
 
 	http.HandleFunc("/submit-answer", func(w http.ResponseWriter, r *http.Request) {
@@ -49,6 +54,16 @@ func main() {
 
 		answer := r.FormValue("answer")
 		fmt.Println("Received answer:", answer)
+
+		if currentQuestionIndex < len(questions) {
+			correctAnswer := questions[currentQuestionIndex].Answer
+			if answer == correctAnswer {
+				fmt.Println("Correct!")
+				currentQuestionIndex++
+			} else {
+				fmt.Println("Incorrect! Try again.")
+			}
+		}
 	})
 
 	fmt.Println("Server started at http://localhost:8080")
