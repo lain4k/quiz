@@ -39,11 +39,19 @@
 		>
 	</form>
   </div>
-	<script>
-		document.body.addEventListener('htmx:afterRequest', function(evt) {
-			const input = document.getElementById('answer-input');
-			if (input) input.value = '';
-		});
-  </script>
+<script>
+  document.body.addEventListener('htmx:afterRequest', function(evt) {
+    const input = document.getElementById('answer-input');
+    if (input) input.value = '';
+    
+    if (evt.detail.successful) {
+      const response = evt.detail.xhr.responseText;
+      if (response === 'correct' || response === 'done') {
+        const img = document.querySelector('.image-container img');
+        img.src = '/current-image?t=' + new Date().getTime();
+      }
+    }
+  });
+</script>
 </body>
 </html>
