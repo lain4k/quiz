@@ -1,0 +1,42 @@
+[
+	{
+		"id": 0,
+		"image": "assets/1.png",
+		"answer": "thechainsmokers"
+	},
+	{
+		"id": 1,
+		"image": "assets/2.png",
+		"answer": "winrar"
+	},
+  {
+		"id": 2,
+		"image": "assets/3.png",
+		"answer": "adolfhitler"
+  },
+  {
+		"id": 3,
+		"image": "assets/4.png",
+		"answer": "oggyandthecockroaches"
+  },
+  {
+		"id": 4,
+		"image": "assets/5.png",
+		"answer": "inskursura"
+  },
+  {
+		"id": 5,
+		"image": "assets/6.png",
+		"answer": "peakyblinders"
+  },
+  {
+		"id": 6,
+		"image": "assets/7.png",
+		"answer": "odin"
+  },
+  {
+		"id": 7,
+		"image": "assets/8.png",
+		"answer": "anuvjain"
+  }
+]
