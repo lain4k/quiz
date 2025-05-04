@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sync"
+	"strings"
 )
 
 type Question struct {
@@ -121,7 +122,9 @@ func main() {
 
 		fmt.Println("Received answer:", answer)
 
-		if answer == correctAnswer {
+		normalizedAnswer := strings.ToLower(strings.ReplaceAll(answer, " ", ""))
+
+		if normalizedAnswer == correctAnswer {
 			session.CurrentIndex++
 			w.Write([]byte("correct"))
 		} else {
