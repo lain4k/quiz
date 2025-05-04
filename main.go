@@ -122,13 +122,15 @@ func main() {
 
 		fmt.Println("Received answer:", answer)
 
-		normalizedAnswer := strings.ToLower(strings.ReplaceAll(answer, " ", ""))
+		normalizedAnswer := strings.ToLower(answer)
 
 		if normalizedAnswer == correctAnswer {
 			session.CurrentIndex++
 			w.Write([]byte("correct"))
+			fmt.Println("Correct answer!")
 		} else {
 			w.Write([]byte("incorrect"))
+			fmt.Println("Incorrect answer")
 		}
 	})
 
