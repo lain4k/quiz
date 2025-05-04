@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"golang.org/x/crypto/argon2"
 	_ "github.com/lib/pq"
@@ -72,27 +73,40 @@ func main() {
 	}
 	defer db.Close()
 
-	fmt.Print("Enter username: ")
-	var username string
-	fmt.Scanln(&username)
+	fmt.Print("How many users do you want to add? ")
+	var numUsersStr string
+	fmt.Scanln(&numUsersStr)
 
-	fmt.Print("Enter password: ")
-	var password string
-	fmt.Scanln(&password)
-
-	fmt.Print("Enter team name: ")
-	var team string
-	fmt.Scanln(&team)
-
-	hash, err := HashPassword(password)
-	if err != nil {
-		log.Fatal("Error hashing password:", err)
+	numUsers, err := strconv.Atoi(numUsersStr)
+	if err != nil || numUsers <= 0 {
+		log.Fatal("Please enter a valid positive number")
 	}
 
-	_, err = db.Exec("INSERT INTO users (username, password_hash, team) VALUES ($1, $2, $3)", username, hash, team)
-	if err != nil {
-		log.Fatal("Failed to create user:", err)
+	for i := 0; i < numUsers; i++ {
+		fmt.Print("Enter username: ")
+		var username string
+		fmt.Scanln(&username)
+
+		fmt.Print("Enter password: ")
+		var password string
+		fmt.Scanln(&password)
+
+		fmt.Print("Enter team name: ")
+		var team string
+		fmt.Scanln(&team)
+
+		hash, err := HashPassword(password)
+		if err != nil {
+			log.Fatal("Error hashing password:", err)
+		}
+
+		_, err = db.Exec("INSERT INTO users (username, password_hash, team) VALUES ($1, $2, $3)", username, hash, team)
+		if err != nil {
+			log.Fatal("Failed to create user:", err)
+		}
+
+		fmt.Println("User created successfully!")
 	}
 
-	fmt.Println("User created successfully!")
+	fmt.Printf("Finished creating %d users.\n", numUsers)
 }
