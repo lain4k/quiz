@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Login</title>
+		<script src="https://unpkg.com/htmx.org@1.9.5"></script>
+	</head>
+	<body>
+		<form hx-post="/login" hx-trigger="submit" hx-swap="none">
+			<div style="text-align: center;">
+				<label for="username">Username:</label>
+				<input
+					type="text"
+					id="username"
+					name="user"
+					placeholder="username"
+					style="text-align: center"
+				>
+			</div>
+			<div style="text-align: center;">
+				<label for="password">Password:</label>
+				<input
+					type="password"
+					id="password"
+					name="password"
+					placeholder="password"
+					style="text-align: center"
+				>
+			</div>
+		</form>
+	</body>
+</html>
