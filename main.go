@@ -255,17 +255,13 @@ func main() {
 		answer := r.FormValue("answer")
 		correctAnswer := questions[session.CurrentIndex].Answer
 
-		fmt.Println("Received answer:", answer)
-
 		normalizedAnswer := strings.ToLower(answer)
 
 		if normalizedAnswer == correctAnswer {
 			session.CurrentIndex++
 			w.Write([]byte("correct"))
-			fmt.Println("Correct answer!")
 		} else {
 			w.Write([]byte("incorrect"))
-			fmt.Println("Incorrect answer")
 		}
 	}))
 
