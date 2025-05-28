@@ -210,6 +210,18 @@ func loadQuestions() error {
 }
 
 func main() {
+	err := os.MkdirAll("logs", 0755)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	logFile, err := os.OpenFile("logs/answers.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.SetOutput(logFile)
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 	initDB()
 	defer db.Close()
 
@@ -254,10 +266,12 @@ func main() {
 
 		answer := r.FormValue("answer")
 		correctAnswer := questions[session.CurrentIndex].Answer
-
 		normalizedAnswer := strings.ToLower(answer)
+		isCorrect := normalizedAnswer == correctAnswer
 
-		if normalizedAnswer == correctAnswer {
+		log.Printf("User: %s, Answer: %s, Correct: %t\n", session.Username, answer, isCorrect)
+		
+		if isCorrect {
 			session.CurrentIndex++
 			w.Write([]byte("correct"))
 		} else {
