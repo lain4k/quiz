@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
@@ -73,9 +74,11 @@ func main() {
 	}
 	defer db.Close()
 
+	scanner := bufio.NewScanner(os.Stdin)
+	
 	fmt.Print("How many users do you want to add? ")
-	var numUsersStr string
-	fmt.Scanln(&numUsersStr)
+	scanner.Scan()
+	numUsersStr := scanner.Text()
 
 	numUsers, err := strconv.Atoi(numUsersStr)
 	if err != nil || numUsers <= 0 {
@@ -84,16 +87,22 @@ func main() {
 
 	for i := 0; i < numUsers; i++ {
 		fmt.Print("Enter username: ")
-		var username string
-		fmt.Scanln(&username)
+		scanner.Scan()
+		username := scanner.Text()
 
 		fmt.Print("Enter password: ")
-		var password string
-		fmt.Scanln(&password)
+		scanner.Scan()
+		password := scanner.Text()
 
 		fmt.Print("Enter team name: ")
-		var team string
-		fmt.Scanln(&team)
+		scanner.Scan()
+		team := scanner.Text()
+
+		if username == "" || password == "" || team == "" {
+			fmt.Println("Error: All fields are required. Please try again.")
+			i--
+			continue
+		}
 
 		hash, err := HashPassword(password)
 		if err != nil {
