@@ -42,6 +42,7 @@ type Question struct {
 type Session struct {
 	CurrentIndex int
 	Username string
+	Team string
 	Authenticated bool
 }
 
@@ -105,8 +106,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			username := r.FormValue("user")
 			password := r.FormValue("password")
 
-			var storedHash string
-			err := db.QueryRow("SELECT password_hash FROM users WHERE username = $1", username,).Scan(&storedHash)
+			var storedHash, team string
+			err := db.QueryRow("SELECT password_hash, team FROM users WHERE username = $1", username).Scan(&storedHash, &team)
 
 			if err != nil {
 				if err == sql.ErrNoRows {
@@ -131,6 +132,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			session := getSession(w, r)
 			session.Authenticated = true
 			session.Username = username
+			session.Team = team
 
 			w.Header().Set("HX-Redirect", "/")
 			w.WriteHeader(http.StatusOK)
@@ -269,7 +271,7 @@ func main() {
 		normalizedAnswer := strings.ToLower(answer)
 		isCorrect := normalizedAnswer == correctAnswer
 
-		log.Printf("User: %s, Answer: %s, Correct: %t\n", session.Username, answer, isCorrect)
+		log.Printf("User: %s, Team: %s, Answer: %s, Correct: %t\n", session.Username, session.Team, answer, isCorrect)
 		
 		if isCorrect {
 			session.CurrentIndex++
