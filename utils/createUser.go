@@ -74,6 +74,10 @@ func main() {
 	}
 	defer db.Close()
 
+	if err := db.Ping(); err != nil {
+		log.Fatal("Failed to connect to PostgreSQL database.\n", err)
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 	
 	fmt.Print("How many users do you want to add? ")
