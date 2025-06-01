@@ -2,9 +2,11 @@ package main
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"database/sql"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -36,7 +38,7 @@ var (
 type Question struct {
 	ID int `json:"id"`
 	Image string `json:"image"`
-	Answer string `json:"answer"`
+	AnswerHash string `json:"answerHash"`
 }
 
 type Session struct {
@@ -66,7 +68,7 @@ func initDB() {
 	}
 }
 
-func compareHash(password, encodedHash string) (bool, error) {
+func comparePasswordHash(password, encodedHash string) (bool, error) {
 	parts := strings.Split(encodedHash, "$")
 	if len(parts) !=6 {
 		return false, fmt.Errorf("invalid hash format")
@@ -97,6 +99,19 @@ func compareHash(password, encodedHash string) (bool, error) {
 	return false, nil
 }
 
+func hashAnswer(answer string) string {
+	normalizedAnswer := strings.ToLower(answer)
+
+	hash := sha256.Sum256([]byte(normalizedAnswer))
+
+	return hex.EncodeToString(hash[:])
+}
+
+func compareAnswerHash(userAnswer, storedHash string) bool {
+	userHash := hashAnswer(userAnswer)
+	return subtle.ConstantTimeCompare([]byte(userHash), []byte(storedHash)) == 1
+}
+
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 		case http.MethodGet:
@@ -118,7 +133,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			match, err := compareHash(password, storedHash)
+			match, err := comparePasswordHash(password, storedHash)
 			if err != nil {
 				http.Error(w, "Authentication error", http.StatusInternalServerError)
 				return
@@ -267,9 +282,8 @@ func main() {
 		}
 
 		answer := r.FormValue("answer")
-		correctAnswer := questions[session.CurrentIndex].Answer
-		normalizedAnswer := strings.ToLower(answer)
-		isCorrect := normalizedAnswer == correctAnswer
+		correctAnswerHash := questions[session.CurrentIndex].AnswerHash
+		isCorrect := compareAnswerHash(answer, correctAnswerHash)
 
 		log.Printf("User: %s, Team: %s, Answer: %s, Correct: %t\n", session.Username, session.Team, answer, isCorrect)
 		

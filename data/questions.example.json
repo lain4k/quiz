@@ -1,0 +1,7 @@
+[
+	{
+		"id": 0,
+		"image": "path/to/file",
+		"answerHash": "your_sha256_hash_here"
+	}
+]
