@@ -286,12 +286,12 @@ func main() {
 		isCorrect := compareAnswerHash(answer, correctAnswerHash)
 		
 		if isCorrect {
+			log.Printf("User: %s, Team: %s, Question: %d, Correct: %t\n", session.Username, session.Team, session.CurrentIndex+1, isCorrect)
 			session.CurrentIndex++
 			w.Write([]byte("correct"))
-			log.Printf("User: %s, Team: %s, Correct: %t\n", session.Username, session.Team, isCorrect)
 		} else {
+			log.Printf("User: %s, Team: %s, Question: %d, Correct: %t, Answer: %s\n", session.Username, session.Team, session.CurrentIndex+1, isCorrect, answer)
 			w.Write([]byte("incorrect"))
-			log.Printf("User: %s, Team: %s, Correct: %t, Answer: %s\n", session.Username, session.Team, isCorrect, answer)
 		}
 	}))
 
