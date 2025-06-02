@@ -284,14 +284,14 @@ func main() {
 		answer := r.FormValue("answer")
 		correctAnswerHash := questions[session.CurrentIndex].AnswerHash
 		isCorrect := compareAnswerHash(answer, correctAnswerHash)
-
-		log.Printf("User: %s, Team: %s, Answer: %s, Correct: %t\n", session.Username, session.Team, answer, isCorrect)
 		
 		if isCorrect {
 			session.CurrentIndex++
 			w.Write([]byte("correct"))
+			log.Printf("User: %s, Team: %s, Correct: %t\n", session.Username, session.Team, isCorrect)
 		} else {
 			w.Write([]byte("incorrect"))
+			log.Printf("User: %s, Team: %s, Correct: %t, Answer: %s\n", session.Username, session.Team, isCorrect, answer)
 		}
 	}))
 
