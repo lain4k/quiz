@@ -42,7 +42,6 @@ type Question struct {
 }
 
 type Session struct {
-	CurrentIndex int
 	Username string
 	Team string
 	Authenticated bool
@@ -66,6 +65,25 @@ func initDB() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+}
+
+func getTeamProgress(team string) (int, error) {
+	var currentIndex int
+	err := db.QueryRow("SELECT current_index FROM team_progress WHERE team = $1", team).Scan(&currentIndex)
+	
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return currentIndex, nil
+}
+
+func updateTeamProgress(team string) error {
+	_, err := db.Exec("UPDATE team_progress SET current_index = current_index + 1 WHERE team = $1", team)	
+	return err
 }
 
 func comparePasswordHash(password, encodedHash string) (bool, error) {
@@ -183,9 +201,9 @@ func getSession(w http.ResponseWriter, r *http.Request) *Session {
 	cookie, err := r.Cookie("session_id")
 	if err != nil {
 		sessionID := generateSessionID()
-		session := &Session{CurrentIndex: 0}
+		newSession := &Session{}
 		sessionMux.Lock()
-		sessions[sessionID] = session
+		sessions[sessionID] = newSession
 		sessionMux.Unlock()
 
 		http.SetCookie(w, &http.Cookie {
@@ -194,7 +212,7 @@ func getSession(w http.ResponseWriter, r *http.Request) *Session {
 			Path: "/",
 			HttpOnly: true,
 		})
-		return session
+		return newSession
 	}
 	
 	sessionMux.RLock()
@@ -202,18 +220,19 @@ func getSession(w http.ResponseWriter, r *http.Request) *Session {
 	sessionMux.RUnlock()
 
 	if session == nil {
-		newSessionID := generateSessionID()
-		session = &Session{CurrentIndex: 0}
+		sessionID := generateSessionID()
+		newSession := &Session{}
 		sessionMux.Lock()
-		sessions[newSessionID] = session
+		sessions[sessionID] = newSession
 		sessionMux.Unlock()
 
 		http.SetCookie(w, &http.Cookie {
 			Name: "session_id",
-			Value: newSessionID,
+			Value: sessionID,
 			Path: "/",
 			HttpOnly: true,
 		})
+		return newSession
 	}
 	return session
 }
@@ -232,7 +251,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	logFile, err := os.OpenFile("logs/answers.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile("logs/latest.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -255,13 +274,20 @@ func main() {
 	http.HandleFunc("/current-image", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
 	
 		session := getSession(w, r)
-		if session.CurrentIndex >= len(questions) {
+		
+		currentIndex, err := getTeamProgress(session.Team)
+		if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		if currentIndex >= len(questions) {
 			http.Error(w, "No more questions", http.StatusNotFound)
 			return
 		}
 		
 		w.Header().Set("Cache-Control", "no-store")
-		http.ServeFile(w, r, questions[session.CurrentIndex].Image)
+		http.ServeFile(w, r, questions[currentIndex].Image)
 	}))
 
 	http.HandleFunc("/submit-answer", authMiddleware(func(w http.ResponseWriter, r *http.Request) {
@@ -271,7 +297,14 @@ func main() {
 		}
 
 		session := getSession(w, r)
-		if session.CurrentIndex >= len(questions) {
+
+		currentIndex, err := getTeamProgress(session.Team)
+		if err != nil {
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		if currentIndex >= len(questions) {
 			w.Write([]byte("done"))
 			return
 		}
@@ -282,15 +315,20 @@ func main() {
 		}
 
 		answer := r.FormValue("answer")
-		correctAnswerHash := questions[session.CurrentIndex].AnswerHash
+		correctAnswerHash := questions[currentIndex].AnswerHash
 		isCorrect := compareAnswerHash(answer, correctAnswerHash)
 		
 		if isCorrect {
-			log.Printf("User: %s, Team: %s, Question: %d, Correct: %t\n", session.Username, session.Team, session.CurrentIndex+1, isCorrect)
-			session.CurrentIndex++
+			log.Printf("User: %s, Team: %s, Question: %d, Correct: %t\n", session.Username, session.Team, currentIndex+1, isCorrect)
+
+			if err := updateTeamProgress(session.Team); err != nil {
+				http.Error(w, "Failed to update progress", http.StatusInternalServerError)
+				return
+			}
+
 			w.Write([]byte("correct"))
 		} else {
-			log.Printf("User: %s, Team: %s, Question: %d, Correct: %t, Answer: %s\n", session.Username, session.Team, session.CurrentIndex+1, isCorrect, answer)
+			log.Printf("User: %s, Team: %s, Question: %d, Correct: %t, Answer: %s\n", session.Username, session.Team, currentIndex+1, isCorrect, answer)
 			w.Write([]byte("incorrect"))
 		}
 	}))
