@@ -118,6 +118,11 @@ func main() {
 			log.Fatal("Failed to create user:", err)
 		}
 
+		_, err = db.Exec("INSERT INTO team_progress (team) VALUES ($1) ON CONFLICT DO NOTHING", team)
+		if err != nil {
+			log.Fatal("Failed to insert team into team_progress:", err)
+		}
+
 		fmt.Println("User created successfully!")
 	}
 
